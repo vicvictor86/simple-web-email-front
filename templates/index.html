@@ -1,0 +1,51 @@
+{% load static %}
+{% load livereload_tags %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+
+  <link rel="stylesheet" href="{% static 'css/global.css' %}">
+  <link rel="stylesheet" href="{% static 'css/index.css' %}">
+  <script src="http://localhost:35729/livereload.js"></script>
+</head>
+
+<body>
+  <div class="container" id="container">
+    <div class="form-container sign-up-container">
+      <form action="{% url 'index' %}" method="POST">
+        {% csrf_token %}
+        <h1>Crie sua conta</h1>
+        <input name="email" type="email" placeholder="Email" required/>
+        <input name="post_type" type="text" value="sign-up" hidden/>
+
+        <button type="submit">Criar conta</button>
+        <button type="button" id="signIn">Tenho conta</button>
+      </form>
+    </div>
+    <div class="form-container sign-in-container">
+      <form action="{% url 'index' %}" method="POST">
+        {% csrf_token %}
+        <h1>Entre na sua conta</h1>
+        <input name="email" type="text" placeholder="Email" required />
+        <input name="post_type" type="text" value="sign-in" hidden/>
+        
+        <button type="submit">Entrar</button>
+        <button type="button" id="signUp">Criar conta</button>
+      </form>
+    </div>
+    <div class="overlay-container">
+      <div class="overlay">
+        <div class="overlay-panel overlay-left"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="{% static 'js/index.js' %}"></script>
+</body>
+
+</html>
