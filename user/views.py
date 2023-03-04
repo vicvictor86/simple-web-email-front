@@ -1,6 +1,8 @@
-from django.shortcuts import render, redirect
 import requests
 import json
+
+from django.shortcuts import render, redirect
+from datetime import datetime
 
 from env import URL_API
 
@@ -26,14 +28,20 @@ def index(request):
                 
                 messages = requests.get(
                     f'{URL_API}/messages?user_id={response_data["id"]}')
-                
-                first_message_received = getFirstReceivedMessage(messages.json(), response_data['id'])
+                messages_data = messages.json()
+
+                for message in messages_data:
+                    message['created_at'] = formatDate(message['created_at'])
+                    message['user_character'] = getUserCharacter(message['sender']['name'])
+                    print(message['created_at'])
+
+                first_message_received = getFirstReceivedMessage(messages_data, response_data['id'])
                 data = {
                     'id': response_data['id'],
                     'name': response_data['name'],
-                    'messages': messages.json(),
+                    'messages': messages_data,
                     'first_message': first_message_received,
-                    'selected_message': first_message_received
+                    'selected_message': messages_data[-1]
                 }
 
                 print(data['first_message'])
@@ -51,3 +59,10 @@ def getFirstReceivedMessage(messages, user_id):
     for message in messages:
         if message['addressee']['id'] == user_id:
             return message
+
+
+def formatDate(date):
+    return datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%d/%m/%Y %H:%M:%S')
+
+def getUserCharacter(username):
+    return username[0].upper()
