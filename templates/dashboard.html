@@ -14,7 +14,7 @@
   <div class="flex h-full antialiased text-gray-800 w-full">
     <div class="flex flex-row h-full w-full overflow-x-hidden">
       <div class="flex flex-col pt-4 pl-6 pr-2 h-screen w-64 bg-white flex-shrink-0">
-        <i class="fa-solid fa-arrow-left mb-4"></i>
+        <a href="{% url 'index' %}" class="flex justify-start fa-solid fa-arrow-left mb-4"></a>
 
         <div class="flex flex-row items-center justify-center h-12 w-full">
 
@@ -42,8 +42,8 @@
           </div>
           <div class="flex flex-col space-y-1 mt-4 -mx-2 h-72 overflow-y-auto">
             {% for message in messages %}
-            {% if message.addressee.id == id %}
-            <button class="flex flex-row items-center hover:bg-gray-100 rounded-xl p-2">
+            {% if message.addressee.id == user_id %}
+            <a href="{% url 'dashboard' message.id %}" class="flex flex-row items-center hover:bg-gray-100 rounded-xl p-2">
               <div class="flex items-center justify-center h-8 w-8 bg-indigo-200 rounded-full">
                 {{ message.user_character }}
               </div>
@@ -54,7 +54,7 @@
                 <div style="max-width: 7.6rem;" class="flex truncate justify-start ml-2 text-xs">{{ message.message.text }}</div>
               </div>
               <div style="max-width: 3.4rem" class="ml-auto text-xs">{{ message.created_at }}</div>
-            </button>
+            </a>
             {% endif %}
             {% endfor %}
           </div>

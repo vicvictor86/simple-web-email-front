@@ -37,12 +37,14 @@ def index(request):
 
                 first_message_received = getFirstReceivedMessage(messages_data, response_data['id'])
                 data = {
-                    'id': response_data['id'],
+                    'user_id': response_data['id'],
                     'name': response_data['name'],
                     'messages': messages_data,
                     'first_message': first_message_received,
-                    'selected_message': messages_data[-1]
+                    'selected_message': messages_data[0]
                 }
+
+                request.session['response_data'] = data
 
                 print(data['first_message'])
                 return render(request, 'dashboard.html', data)
@@ -51,9 +53,16 @@ def index(request):
     return render(request, 'index.html')
 
 
-def dashboard(request, data):
-    return render(request, 'dashboard.html', data)
+def dashboard(request, id):
+    data = request.session['response_data']
+    messages = data['messages']
 
+    for message in messages:
+        if message['id'] == id:
+            data['selected_message'] = message
+            break
+    
+    return render(request, 'dashboard.html', data)
 
 def getFirstReceivedMessage(messages, user_id):
     for message in messages:
