@@ -11,9 +11,9 @@
 </head>
 
 <body class="flex h-full overflow-hidden items-center justify-center w-full" style="background: #edf2f7;">
-  <div class="flex h-full antialiased text-gray-800 w-full">
+  <div class="flex h-screen antialiased text-gray-800 w-full">
     <div class="flex flex-row h-full w-full overflow-x-hidden">
-      <div class="flex flex-col pt-4 pl-6 pr-2 h-screen w-96 bg-white flex-shrink-0">
+      <div class="flex flex-col pt-4 pl-6 pr-2 h-96 w-96 bg-white flex-shrink-0">
         <a href="{% url 'index' %}" class="flex justify-start fa-solid fa-arrow-left mb-4"></a>
 
         <div class="flex flex-row items-center justify-center h-12 w-full">
@@ -35,7 +35,7 @@
           </div>
           <div class="text-sm font-semibold mt-2">{{ name }}</div>
         </div>
-        <div class="flex flex-col mt-6">
+        <div class="flex h-full flex-col mt-6">
           <div class="flex flex-row items-center justify-between text-xs">
             <a href="{% url 'dashboard_status' %}?emails_status=received&status={{ status }}" class="font-bold">Caixa de entrada</a>
             <a href="{% url 'dashboard_status' %}?emails_status=sent&status={{ status }}" class="font-bold">Enviados</a>
@@ -49,7 +49,7 @@
               <span class="flex items-center justify-center bg-gray-300 h-4 w-4 rounded-full">{{ unread_messages }}</span>
             </div>
           </div>
-          <div class="flex flex-col space-y-1 mt-4 -mx-2 h-72 overflow-y-auto">
+          <div class="flex flex-col space-y-1 mt-4 -mx-2 h-80 overflow-y-auto">
             {% for message in messages %}
             {% if message.addressee.id == user_id and emails_status == 'received' %}
             <a href="{% url 'dashboard' message.id %}?status=show&emails_status={{emails_status}}" class="flex flex-row items-center hover:bg-gray-100 rounded-xl p-2 mr-2 {{ message.read_color }}">
@@ -100,42 +100,61 @@
               <i class="icon clickable fa-solid fa-trash-can mr-1" aria-hidden="true"></i>
               <p class="text-xs">Apagar</p>
             </a>
-            <button class="flex justify-center items-center mr-5">
+            <a href="{% url 'reply_message' selected_message.id %}?status=create&emails_status={{emails_status}}" class="flex justify-center items-center mr-5">
               <i class="icon clickable fa-sharp fa-solid fa-reply mr-1" aria-hidden="true"></i>
               <p class="text-xs">Responder</p>
-            </button>
-            <button class="flex justify-center items-center">
+            </a>
+            <a href="{% url 'forward_message' selected_message.id %}?status=create&emails_status={{emails_status}}" class="flex justify-center items-center">
               <i class="fa-solid fa-arrow-right mr-1"></i>
               <p class="text-xs">Encaminhar</p>
-            </button>
+            </a>
           </div>
         </div>
         {% elif status == 'create' %}
-        <div class="flex justify-center items-center p-8 h-12 w-full border-b border-gray-300"
+        <div class="flex justify-center items-center p-8 h-14 w-full border-b border-gray-300"
           style="background: #f3f4f6">
-          <div class="flex justify-center items-center">
-            <a href="{% url 'dashboard_status' %}" class="flex justify-center items-center mr-5">
-              <i class="icon clickable fa-solid fa-trash-can mr-1" aria-hidden="true"></i>
-              <p class="text-xs">Descartar</p>
-            </a>
-            <button type="submit" form="send-message-form" class="flex justify-center items-center">
-              {% csrf_token %}
-              <i class="fa-sharp fa-solid fa-paper-plane mr-1"></i>
-              <p class="text-xs">Enviar</p>
-            </button>
+          <div class="flex flex-col justify-center items-center">
+            <div class="flex justify-center items-center">
+              {% if is_replying %}
+              <p class="text-2xl">Respondendo</p>
+              {% elif is_forwarding %}
+              <p class="text-2xl">Encaminhando</p>
+              {% endif %}
+            </div>
+            <div class="flex justify-center items-center">
+              <a href="{% url 'dashboard_status' %}" class="flex justify-center items-center mr-5">
+                <i class="icon clickable fa-solid fa-trash-can mr-1" aria-hidden="true"></i>
+                <p class="text-xl">Descartar</p>
+              </a>
+              <button type="submit" form="send-message-form" class="flex justify-center items-center">
+                {% csrf_token %}
+                <i class="fa-sharp fa-solid fa-paper-plane mr-1"></i>
+                <p class="text-xl">Enviar</p>
+              </button>
+            </div>
           </div>
         </div>
         {% endif %}
 
-        <div class="flex flex-col flex-auto flex-shrink-0 rounded-2xl bg-gray-100 h-screen p-2">
+        <div class="flex flex-col flex-auto flex-shrink-0 rounded-2xl bg-gray-100 h-80 p-2">
           {% if status == 'show' and selected_message is not None %}
-          <div id="selected-message" class="flex flex-col h-full overflow-x-auto mb-4">
-            <div class="flex flex-col h-full overflow-y-auto">
+          <div id="selected-message" class="flex flex-col h-full overflow-x-auto">
+            <div class="flex flex-col h-64 overflow-y-auto">
               <div class="col-start-1 col-end-8">
                 <div class="flex flex-row items-center">
-                  <div class="relative ml-3 text-sm py-2 px-4">
+                  <div class="relative ml-3 text-lg py-2 px-4">
                     <div>De: {{ selected_message.sender.name }}</div>
                     <div>Para: {{ selected_message.addressee.name }}</div>
+                    {% if selected_message.replying_to_id %}
+                    <div class="flex">
+                      <label for="replying_to" class="mr-1">Respondendo a</label>
+                      <a style="color: blue" href="{% url 'dashboard' selected_message.replying_to_id %}?status=show&emails_status={{emails_status}}">mensagem</a>
+                    </div>
+                    {% elif selected_message.forwarding_to_id %}
+                    <div class="flex">
+                      <label for="forwarding_to" class="mr-1">Encaminhando de</label>
+                      <a style="color: blue" href="{% url 'dashboard' selected_message.forwarding_to_id %}?status=show&emails_status={{emails_status}}">mensagem</a>
+                    {% endif %}
                   </div>
                 </div>
               </div>
@@ -151,7 +170,7 @@
             </div>
           </div>
           {% elif status == 'create' %}
-          <form id="send-message-form" action="{% url 'send_message' %}" method="POST">
+          <form id="send-message-form" action="{% url 'send_message' %}?forward=true" method="POST">
             {% csrf_token %}
             <div id="create-message" class="flex flex-col h-full overflow-x-auto mb-4">
               <div class="flex flex-col h-full ">
@@ -159,23 +178,42 @@
                   <div class="flex flex-col ml-3 text-sm py-2 px-4 w-full">
                     <div class="flex items-center border-b border-gray-400 border-solid">
                       <input type="text" name="user_id" value="{{ user_id }}" hidden>
+                      {% if is_replying %}
+                      <input type="text" name="replying_to_id" value="{{ selected_message.id }}" hidden>
+                      {% endif %}
                       <label for="from" class="mr-2" >De:</label>
                       <input class="border-none focus:outline-none w-full" id="from" name="from" value="{{ name }}" readonly style="background-color: #f3f4f6"></input>
                     </div>
                     <div class="flex items-center border-b border-gray-400 border-solid mt-2">
                       <label for="to" class="mr-2">Para:</label>
+                      {% if is_replying %}
+                      <input class="border-none focus:outline-none w-full" id="to" name="to" value="{{ selected_message.sender.name }}" style="background-color: #f3f4f6"></input>
+                      {% else %}
                       <input class="border-none focus:outline-none w-full" id="to" name="to" style="background-color: #f3f4f6"></input>
+                      {% endif %}
                     </div>
                     <div class="flex items-center border-b border-gray-400 border-solid mt-2">
                       <label for="subject" class="mr-2">Assunto:</label>
+                      {% if is_replying %}
+                      <input class="border-none focus:outline-none w-full" id="subject" name="subject" value="{{ selected_message.message.subject }}" style="background-color: #f3f4f6"></input>
+                      {% elif is_forwarding %}
+                      <input class="border-none focus:outline-none w-full" id="subject" name="subject" value="{{ selected_message.message.subject }}" style="background-color: #f3f4f6" readonly></input>
+                      {% else %}
                       <input class="border-none focus:outline-none w-full" id="subject" name="subject" style="background-color: #f3f4f6"></input>
+                      {% endif %}
                     </div>
                   </div>
                 </div>
                 
                 <div class="flex flex-row items-center">
                   <div class="ml-3 text-sm py-2 px-4 w-full">
+                    {% if is_replying %}
+                    <textarea class="w-full h-80 p-2 border rounded-md text-sm" id="text" name="text" style="resize: none;">{{ selected_message.message.text }}</textarea>
+                    {% elif is_forwarding %}
+                    <textarea class="w-full h-80 p-2 border rounded-md text-sm" id="text" name="text" style="resize: none;" readonly>{{ selected_message.message.text }}</textarea>
+                    {% else %}
                     <textarea class="w-full h-80 p-2 border rounded-md text-sm" id="text" name="text" style="resize: none;"></textarea>
+                    {% endif %}
                   </div>
                 </div>
                 
