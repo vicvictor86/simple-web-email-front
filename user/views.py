@@ -2,6 +2,7 @@ import requests
 import json
 
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from datetime import datetime
 from dateutil import tz
 
@@ -12,32 +13,43 @@ from env import URL_API
 
 def index(request):
     print(request.method)
+
     if request.method == 'POST':
         email = request.POST.get('email')
         post_type = request.POST.get('post_type')
 
         json_data = json.dumps({'name': email})
         if post_type == 'sign-up':
-            response = requests.post(f'{URL_API}/users', data=json_data)
+            response = requests.post(f'{URL_API}/users', data=json_data).json()
+
+            if has_error(response):
+                error_message = response
+                return render(request, 'index.html', error_message)
         elif post_type == 'sign-in':
-            response = requests.post(f'{URL_API}/users/login', data=json_data)
+            response = requests.post(
+                f'{URL_API}/users/login', data=json_data).json()
 
-            if response.status_code == 201:
-                response_data = response.json()
+            if has_error(response):
+                error_message = response
+                return render(request, 'index.html', error_message)
 
-                messages = requests.get(
-                    f'{URL_API}/messages?user_id={response_data["id"]}')
-                messages_data = messages.json()
+            messages = requests.get(
+                f'{URL_API}/messages?user_id={response["id"]}').json()
 
-                unread_messages = countUnreadMessages(messages_data, response_data["id"])
+            if has_error(response):
+                error_message = response
+                return render(request, 'index.html', error_message)
 
-                updateMessageDataInfo(messages_data)
-                
-                data = updateData(response_data['id'], response_data['name'], messages_data, None, unread_messages, 'show', 'received', False)
+            unread_messages = countUnreadMessages(messages, response["id"])
 
-                request.session['session_data'] = data
+            updateMessageDataInfo(messages)
 
-                return render(request, 'dashboard.html', data)
+            data = updateData(response['id'], response['name'], messages,
+                              None, unread_messages, 'show', 'received', False)
+
+            request.session['session_data'] = data
+
+            return render(request, 'dashboard.html', data)
 
     return render(request, 'index.html')
 
@@ -71,14 +83,19 @@ def dashboard(request, id):
     for message in messages:
         if message['id'] == id:
             if message['addressee_id'] == session_data['user_id']:
-                json_data = json.dumps({'id': id ,'read': True})
-                requests.put(f'{URL_API}/messages', data=json_data)            
+                json_data = json.dumps({'id': id, 'read': True})
+                response = requests.put(f'{URL_API}/messages', data=json_data).json()
+
+                if has_error(response):
+                    error_message = response
+                    session_data['error_message'] = error_message
+                    return render(request, 'dashboard.html', session_data)
 
             session_data['selected_message'] = message
             if message['read'] == False:
                 message['read'] = True
                 unread_messages -= 1
-        
+
             break
 
     updateMessageDataInfo(messages, True)
@@ -105,13 +122,20 @@ def send_message(request):
         to = to_with_commas.split(',')
 
         replying_to_id = request.POST.get('replying_to_id') or ""
-        forward = request.POST.get('forward') or ""
+        forwarding_to_id = request.POST.get('forwarding_to_id') or ""
 
-        if forward == "true":
-            forward_data = json.dumps({ 'userMessageId': session_data['selected_message']['id'], 'senderId': user_id, 'addresseeId': to})
-            response = requests.post(f'{URL_API}/messages/forward', data=forward_data)
+        if forwarding_to_id is not "":
+            forward_data = json.dumps(
+                {'userMessageId': session_data['selected_message']['id'], 'senderId': user_id, 'addressees': to})
+            response = requests.post(f'{URL_API}/messages/forward', data=forward_data).json()
+            
+            if has_error(response):
+                error_message = response
+                session_data['error_message'] = error_message
+                
+                return render(request, 'dashboard.html', session_data)
 
-            return redirect(f'/dashboard/{response["id"]}?status=show&emails_status=received')
+            return redirect(f'/dashboard/{response[0]["id"]}?status=show&emails_status=received')
 
         json_data = json.dumps({
             'sender': user_id,
@@ -124,9 +148,14 @@ def send_message(request):
         response = requests.post(f'{URL_API}/messages', data=json_data)
         response_data = response.json()
 
+        if has_error(response_data):
+            error_message = response_data
+            session_data['error_message'] = error_message
+            return render(request, 'dashboard.html', session_data)
+
         if response.status_code == 201:
             session_data['messages'].append(response_data[0])
-            
+
             return redirect(f'/dashboard/{response_data[0]["id"]}?status=show&emails_status=sent')
         else:
             session_data = request.session['session_data']
@@ -136,22 +165,27 @@ def send_message(request):
 
     return redirect('/')
 
-def delete_message(request, id): 
+
+def delete_message(request, id):
     session_data = request.session['session_data']
-    response = requests.delete(f'{URL_API}/messages/{id}?user_id={session_data["user_id"]}')
+    response = requests.delete(
+        f'{URL_API}/messages/{id}?user_id={session_data["user_id"]}')
+
+    if has_error(response.json()):
+        error_message = response.json()
+        session_data['error_message'] = error_message
+        return render(request, 'dashboard.html', session_data)
 
     if response.status_code == 200:
         for message in session_data['messages']:
             if message['id'] == id:
                 session_data['messages'].remove(message)
                 break
-        
+
         request.session['session_data'] = session_data
-        return redirect('dashboard_status')
-    else:
-        print('não encontrou')
-        return redirect('dashboard_status')
+    return redirect('dashboard_status')
     
+
 def reply_message(request, id):
     session_data = request.session['session_data']
     messages = session_data['messages']
@@ -161,13 +195,15 @@ def reply_message(request, id):
 
     for message in messages:
         if message['id'] == id:
-            data = updateData(session_data['user_id'], session_data['name'], messages, message, session_data['unread_messages'], session_data['status'], session_data['emails_status'], True)
-        
+            data = updateData(session_data['user_id'], session_data['name'], messages, message,
+                              session_data['unread_messages'], session_data['status'], session_data['emails_status'], True)
+
             request.session['session_data'] = data
 
             return render(request, 'dashboard.html', data)
 
     return redirect('dashboard_status')
+
 
 def forward_message(request, id):
     session_data = request.session['session_data']
@@ -178,13 +214,15 @@ def forward_message(request, id):
 
     for message in messages:
         if message['id'] == id:
-            data = updateData(session_data['user_id'], session_data['name'], messages, message, session_data['unread_messages'], session_data['status'], session_data['emails_status'], False, True)
-        
+            data = updateData(session_data['user_id'], session_data['name'], messages, message,
+                              session_data['unread_messages'], session_data['status'], session_data['emails_status'], False, True)
+
             request.session['session_data'] = data
 
             return render(request, 'dashboard.html', data)
 
     return redirect('dashboard_status')
+
 
 def getFirstReceivedMessage(messages, user_id):
     for message in messages:
@@ -193,16 +231,21 @@ def getFirstReceivedMessage(messages, user_id):
 
 
 def get_new_messages(request, user_id):
-    messages = requests.get(f'{URL_API}/messages?user_id={user_id}')
-    messages_data = messages.json()
-    
-    unread_messages = countUnreadMessages(messages_data, user_id)
-    updateMessageDataInfo(messages_data)
+    messages = requests.get(f'{URL_API}/messages?user_id={user_id}').json()
+
+    if has_error(messages):
+        error_message = messages
+        request.session['session_data']['error_message'] = error_message
+        return render(request, 'dashboard.html', request.session['session_data'])
+
+    unread_messages = countUnreadMessages(messages, user_id)
+    updateMessageDataInfo(messages)
 
     response_data = request.session['session_data']
 
-    data = updateData(user_id, response_data['name'], messages_data, response_data['selected_message'], unread_messages, response_data['status'], response_data['emails_status'])
-    
+    data = updateData(user_id, response_data['name'], messages, response_data['selected_message'],
+                      unread_messages, response_data['status'], response_data['emails_status'])
+
     request.session['session_data'] = data
 
     return render(request, 'dashboard.html', data)
@@ -219,8 +262,10 @@ def formatDate(date):
 
     return central.strftime('%d/%m/%Y %H:%M:%S')
 
+
 def getUserCharacter(username):
     return username[0].upper()
+
 
 def countUnreadMessages(messages, user_id):
     unread_messages = 0
@@ -230,17 +275,17 @@ def countUnreadMessages(messages, user_id):
 
     return unread_messages
 
+
 def updateMessageDataInfo(messages_data, date_already_formatted=False):
     for message in messages_data:
         if not date_already_formatted:
             message['created_at'] = formatDate(message['created_at'])
-            
+
         message['user_character'] = getUserCharacter(message['sender']['name'])
 
         if message['read'] == False:
-            message['read_color'] = 'bg-yellow-500'
-        else:
-            message['read_color'] = 'bg-indigo-200'
+            message['read_color'] = 'bg-blue-400'
+
 
 def updateData(user_id, name, messages, selected_message, unread_messages, status, email_status, is_replying=False, isForwarding=False):
     data = {
@@ -256,3 +301,9 @@ def updateData(user_id, name, messages, selected_message, unread_messages, statu
     }
 
     return data
+
+
+def has_error(response):
+    if 'status' in response and response['status'] == 'error':
+        return True
+    return False

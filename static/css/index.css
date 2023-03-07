@@ -28,7 +28,6 @@ p {
   font-weight: 100;
   line-height: 20px;
   letter-spacing: 0.5px;
-  margin: 20px 0 30px;
 }
 
 span {
@@ -51,8 +50,8 @@ button {
   font-weight: bold;
   padding: 12px 45px;
   letter-spacing: 1px;
-  max-width: 15rem;
-  min-height: 5.3rem;
+  min-width: 24rem;
+  min-height: 6.4rem;
   text-transform: uppercase;
   transition: transform 80ms ease-in;
 }
@@ -87,7 +86,6 @@ input {
   border: none;
   border-radius: 0.8rem;
   padding: 22px 15px;
-  margin: 8px 0;
   width: 85%;
 }
 
@@ -97,9 +95,9 @@ input {
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
   position: relative;
   overflow: hidden;
-  width: 820px;
+  width: 1060px;
   max-width: 100%;
-  min-height: 520px;
+  min-height: 720px;
 }
 
 .form-container {
@@ -113,6 +111,26 @@ input {
   left: 0;
   width: 50%;
   z-index: 2;
+}
+
+form .email-input {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+form .email-input input {
+  width: 90%;
+}
+
+form .email-input p {
+  width: 70%;
+  margin-top: 1.4rem;
+  color: #f00e12;
+  font-weight: bold;
+  font-size: 1.4rem;
 }
 
 .container.right-panel-active .sign-in-container {

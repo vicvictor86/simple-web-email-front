@@ -18,8 +18,8 @@
       <form action="{% url 'index' %}" method="POST">
         {% csrf_token %}
         <h1>Crie sua conta</h1>
-        <input name="email" type="email" placeholder="Email" required/>
-        <input name="post_type" type="text" value="sign-up" hidden/>
+        <input name="email" type="email" placeholder="Email" required />
+        <input name="post_type" type="text" value="sign-up" hidden />
 
         <button type="submit">Criar conta</button>
         <button type="button" id="signIn">Tenho conta</button>
@@ -29,9 +29,14 @@
       <form action="{% url 'index' %}" method="POST">
         {% csrf_token %}
         <h1>Entre na sua conta</h1>
-        <input name="email" type="text" placeholder="Email" required />
-        <input name="post_type" type="text" value="sign-in" hidden/>
-        
+        <div class="email-input">
+          <input name="email" type="text" placeholder="Email" required />
+          {% if message %}
+          <p>{{ message }}</p> 
+          {% endif %}
+        </div>
+        <input name="post_type" type="text" value="sign-in" hidden />
+
         <button type="submit">Entrar</button>
         <button type="button" id="signUp">Criar conta</button>
       </form>
