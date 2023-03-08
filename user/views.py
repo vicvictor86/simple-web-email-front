@@ -2,9 +2,9 @@ import requests
 import json
 
 from django.shortcuts import render, redirect
-from django.urls import reverse
 from datetime import datetime
 from dateutil import tz
+from user.utils import translateErrorMessage 
 
 from env import URL_API
 
@@ -24,6 +24,7 @@ def index(request):
 
             if has_error(response):
                 error_message = response
+                error_message['message'] = translateErrorMessage(error_message['message'])
                 return render(request, 'index.html', error_message)
         elif post_type == 'sign-in':
             response = requests.post(
@@ -31,6 +32,7 @@ def index(request):
 
             if has_error(response):
                 error_message = response
+                error_message['message'] = translateErrorMessage(error_message['message'])
                 return render(request, 'index.html', error_message)
 
             messages = requests.get(
@@ -38,6 +40,7 @@ def index(request):
 
             if has_error(response):
                 error_message = response
+                error_message['message'] = translateErrorMessage(error_message['message'])
                 return render(request, 'index.html', error_message)
 
             unread_messages = countUnreadMessages(messages, response["id"])
@@ -88,6 +91,7 @@ def dashboard(request, id):
 
                 if has_error(response):
                     error_message = response
+                    error_message['message'] = translateErrorMessage(error_message['message'])
                     session_data['error_message'] = error_message
                     return render(request, 'dashboard.html', session_data)
 
@@ -131,6 +135,7 @@ def send_message(request):
             
             if has_error(response):
                 error_message = response
+                error_message['message'] = translateErrorMessage(error_message['message'])
                 session_data['error_message'] = error_message
                 
                 return render(request, 'dashboard.html', session_data)
@@ -150,6 +155,7 @@ def send_message(request):
 
         if has_error(response_data):
             error_message = response_data
+            error_message['message'] = translateErrorMessage(error_message['message'])
             session_data['error_message'] = error_message
             return render(request, 'dashboard.html', session_data)
 
@@ -173,6 +179,7 @@ def delete_message(request, id):
 
     if has_error(response.json()):
         error_message = response.json()
+        error_message['message'] = translateErrorMessage(error_message['message'])
         session_data['error_message'] = error_message
         return render(request, 'dashboard.html', session_data)
 
@@ -235,6 +242,7 @@ def get_new_messages(request, user_id):
 
     if has_error(messages):
         error_message = messages
+        error_message['message'] = translateErrorMessage(error_message['message'])
         request.session['session_data']['error_message'] = error_message
         return render(request, 'dashboard.html', request.session['session_data'])
 
@@ -291,6 +299,7 @@ def updateData(user_id, name, messages, selected_message, unread_messages, statu
     data = {
         'user_id': user_id,
         'name': name,
+        'user_first_character': getUserCharacter(name),
         'messages': messages,
         'selected_message': selected_message,
         'unread_messages': unread_messages,
