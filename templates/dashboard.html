@@ -204,9 +204,9 @@
                     <div class="flex items-center border-b border-gray-400 text-base border-solid mt-2">
                       <label for="to" class="mr-2 text-xl">Para:</label>
                       {% if is_replying %}
-                      <input class="border-none focus:outline-none w-full" id="to" name="to" value="{{ selected_message.sender.name }}" required style="background-color: #f3f4f6"></input>
+                      <input class="border-none focus:outline-none w-full" placeholder="exemplo@hotmail.com, exemplo2@hotmail.com" id="to" name="to" value="{{ selected_message.sender.name }}" readonly required style="background-color: #f3f4f6"></input>
                       {% else %}
-                      <input class="border-none focus:outline-none w-full" id="to" name="to" required style="background-color: #f3f4f6"></input>
+                      <input class="border-none focus:outline-none w-full" placeholder="exemplo@hotmail.com, exemplo2@hotmail.com" id="to" name="to" required style="background-color: #f3f4f6"></input>
                       {% endif %}
                     </div>
                     <div class="flex items-center border-b border-gray-400 text-base border-solid mt-2">
