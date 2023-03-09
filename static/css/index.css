@@ -123,7 +123,9 @@ form .email-input {
 
 form .email-input input {
   width: 90%;
+  background-color: #dddddd;
 }
+
 
 form .email-input p {
   width: 70%;
@@ -131,6 +133,10 @@ form .email-input p {
   color: #f00e12;
   font-weight: bold;
   font-size: 1.4rem;
+}
+
+form .email-input p.success {
+  color: #64bf79;
 }
 
 .container.right-panel-active .sign-in-container {

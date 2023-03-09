@@ -78,6 +78,7 @@
                 <div class="flex justify-start items-center">
                   <div class="ml-2 text-lg font-semibold">{{ message.addressee.name }}</div>
                 </div>
+                <div style="max-width: 7.6rem;" class="flex truncate justify-start ml-2 font-semibold text-base">{{ message.message.subject }}</div>
                 <div style="max-width: 7.6rem;" class="flex truncate justify-start ml-2 text-base">{{ message.message.text }}</div>
               </div>
               <div style="max-width: 3.4rem" class="ml-auto text-sm mr-4">{{ message.created_at }}</div>
@@ -89,6 +90,10 @@
         {% if error_message %}
         <div class="flex justify-center items-center mt-8">
           <p class="bg-red-500 p-4 rounded-xl text-white">{{ error_message.message }}</p>
+        </div>
+        {% elif success_message %}
+        <div class="flex justify-center items-center mt-8">
+          <p style="background-color: #64bf79" class="p-4 rounded-xl text-white">{{ success_message.message }}</p>
         </div>
         {% endif %}
       </div>
@@ -199,19 +204,19 @@
                     <div class="flex items-center border-b border-gray-400 text-base border-solid mt-2">
                       <label for="to" class="mr-2 text-xl">Para:</label>
                       {% if is_replying %}
-                      <input class="border-none focus:outline-none w-full" id="to" name="to" value="{{ selected_message.sender.name }}" style="background-color: #f3f4f6"></input>
+                      <input class="border-none focus:outline-none w-full" id="to" name="to" value="{{ selected_message.sender.name }}" required style="background-color: #f3f4f6"></input>
                       {% else %}
-                      <input class="border-none focus:outline-none w-full" id="to" name="to" style="background-color: #f3f4f6"></input>
+                      <input class="border-none focus:outline-none w-full" id="to" name="to" required style="background-color: #f3f4f6"></input>
                       {% endif %}
                     </div>
                     <div class="flex items-center border-b border-gray-400 text-base border-solid mt-2">
                       <label for="subject" class="mr-2 text-xl">Assunto:</label>
                       {% if is_replying %}
-                      <input class="border-none focus:outline-none w-full" id="subject" name="subject" value="{{ selected_message.message.subject }}" style="background-color: #f3f4f6"></input>
+                      <input class="border-none focus:outline-none w-full" id="subject" name="subject" required value="{{ selected_message.message.subject }}" style="background-color: #f3f4f6"></input>
                       {% elif is_forwarding %}
-                      <input class="border-none focus:outline-none w-full" id="subject" name="subject" value="{{ selected_message.message.subject }}" style="background-color: #f3f4f6" readonly></input>
+                      <input class="border-none focus:outline-none w-full" id="subject" name="subject" required value="{{ selected_message.message.subject }}" style="background-color: #f3f4f6" readonly></input>
                       {% else %}
-                      <input class="border-none focus:outline-none w-full" id="subject" name="subject" style="background-color: #f3f4f6"></input>
+                      <input class="border-none focus:outline-none w-full" id="subject" name="subject" required style="background-color: #f3f4f6"></input>
                       {% endif %}
                     </div>
                   </div>
@@ -220,11 +225,11 @@
                 <div class="flex flex-row items-center">
                   <div class="ml-3 text-sm py-2 px-4 text-base w-full">
                     {% if is_replying %}
-                    <textarea class="w-full h-80 p-2 border rounded-md" id="text" name="text" style="resize: none;">{{ selected_message.message.text }}</textarea>
+                    <textarea class="w-full h-80 p-2 border rounded-md" id="text" name="text" required style="resize: none;">{{ selected_message.message.text }}</textarea>
                     {% elif is_forwarding %}
-                    <textarea class="w-full h-80 p-2 border rounded-md" id="text" name="text" style="resize: none;" readonly>{{ selected_message.message.text }}</textarea>
+                    <textarea class="w-full h-80 p-2 border rounded-md" id="text" name="text" required style="resize: none;" readonly>{{ selected_message.message.text }}</textarea>
                     {% else %}
-                    <textarea class="w-full h-80 p-2 border rounded-md" id="text" name="text" style="resize: none;"></textarea>
+                    <textarea class="w-full h-80 p-2 border rounded-md" id="text" name="text" required style="resize: none;"></textarea>
                     {% endif %}
                   </div>
                 </div>

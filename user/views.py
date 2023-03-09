@@ -8,8 +8,6 @@ from user.utils import translateErrorMessage
 
 from env import URL_API
 
-# Create your views here.
-
 
 def index(request):
     print(request.method)
@@ -26,6 +24,14 @@ def index(request):
                 error_message = response
                 error_message['message'] = translateErrorMessage(error_message['message'])
                 return render(request, 'index.html', error_message)
+            
+            success_message = {
+               'message': 'Usuário criado com sucesso',
+               'type': 'success'
+            }
+            
+            return render(request, 'index.html', success_message)
+
         elif post_type == 'sign-in':
             response = requests.post(
                 f'{URL_API}/users/login', data=json_data).json()
@@ -80,6 +86,21 @@ def dashboard(request, id):
     messages = session_data['messages']
     session_data['status'] = request.GET.get('status')
     session_data['emails_status'] = request.GET.get('emails_status')
+    need_update = request.GET.get('update')
+
+    if need_update == 'true':
+        messages = requests.get(
+            f'{URL_API}/messages?user_id={session_data["user_id"]}').json()
+
+        if has_error(messages):
+            error_message = messages
+            error_message['message'] = translateErrorMessage(error_message['message'])
+            session_data['error_message'] = error_message
+            return render(request, 'dashboard.html', session_data)
+
+        updateMessageDataInfo(messages)
+
+        session_data['messages'] = messages
 
     unread_messages = session_data['unread_messages']
 
@@ -123,12 +144,14 @@ def send_message(request):
         subject = request.POST.get('subject')
         text = request.POST.get('text')
 
-        to = to_with_commas.split(',')
+        print(to_with_commas.strip())
+        to = to_with_commas.replace(' ', '').split(',')
+        print(to)
 
         replying_to_id = request.POST.get('replying_to_id') or ""
         forwarding_to_id = request.POST.get('forwarding_to_id') or ""
 
-        if forwarding_to_id is not "":
+        if forwarding_to_id != "":
             forward_data = json.dumps(
                 {'userMessageId': session_data['selected_message']['id'], 'senderId': user_id, 'addressees': to})
             response = requests.post(f'{URL_API}/messages/forward', data=forward_data).json()
@@ -140,7 +163,7 @@ def send_message(request):
                 
                 return render(request, 'dashboard.html', session_data)
 
-            return redirect(f'/dashboard/{response[0]["id"]}?status=show&emails_status=received')
+            return redirect(f'/dashboard/{response[0]["id"]}?status=show&emails_status=received&update=true')
 
         json_data = json.dumps({
             'sender': user_id,
@@ -162,7 +185,7 @@ def send_message(request):
         if response.status_code == 201:
             session_data['messages'].append(response_data[0])
 
-            return redirect(f'/dashboard/{response_data[0]["id"]}?status=show&emails_status=sent')
+            return redirect(f'/dashboard/{response_data[0]["id"]}?status=show&emails_status=sent&update=true')
         else:
             session_data = request.session['session_data']
             messages = session_data['messages']

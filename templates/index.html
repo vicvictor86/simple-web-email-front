@@ -32,7 +32,7 @@
         <div class="email-input">
           <input name="email" type="text" placeholder="Email" required />
           {% if message %}
-          <p>{{ message }}</p> 
+          <p class="{{ type }}">{{ message }}</p> 
           {% endif %}
         </div>
         <input name="post_type" type="text" value="sign-in" hidden />
